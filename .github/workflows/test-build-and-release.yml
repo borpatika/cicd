@@ -27,10 +27,26 @@ jobs:
         run: |
           ./check_operations
 
+  static-analysis:
+    name: Static analysis (splint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install splint
+        run: |
+          sudo apt update
+          sudo apt install -y splint
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run splint
+        run: |
+          splint --compdef --exportlocal simplecalculator.c operations.c
 
   building-and-delivery:
     name: Build and delivery
-    needs: [unit-test]
+    needs: [unit-test, static-analysis]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,9 +59,13 @@ jobs:
         run: |
           gcc operations.c simplecalculator.c -o simplecalculator
 
+      - name: Create neptun.txt
+        run: |
+          echo "WGJUIA" > neptun.txt
+
       - name: Create tar.gz archive
         run: |
-          tar -czvf simplecalculator.tar.gz simplecalculator
+          tar -czvf simplecalculator.tar.gz simplecalculator neptun.txt
 
       - name: Create Release
         uses: marvinpinto/action-automatic-releases@latest
